@@ -15,6 +15,19 @@ final class CatalogTests: XCTestCase {
         XCTAssertEqual(catalog.totalCount, 137, "dex size changed — was the catalog rebuilt?")
     }
 
+    /// The human test subject must resolve (so the recognizer can catch it) but
+    /// must never count toward the real dex — that is the whole point of it
+    /// being a debug subject rather than a 138th species.
+    func testDebugSubjectResolvesButIsExcludedFromTheRealDex() {
+        let human = catalog.species(forLabel: "adult")
+        XCTAssertNotNil(human, "debug subject 'adult' should resolve")
+        XCTAssertFalse(
+            catalog.all.contains { $0.labelKey == "adult" },
+            "debug subjects must not appear in the shipped catalog"
+        )
+        XCTAssertEqual(catalog.totalCount, 137, "resolving a debug subject must not change dex size")
+    }
+
     /// Dex numbers are identity. If they shift, every saved catch points at a
     /// different creature than it did before.
     func testDexNumbersAreContiguousAndStable() {

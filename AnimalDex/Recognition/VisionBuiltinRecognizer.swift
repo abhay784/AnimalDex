@@ -25,7 +25,11 @@ final class VisionBuiltinRecognizer: SpeciesRecognizer {
     private let log = Logger(subsystem: "com.abhay.animaldex", category: "recognition")
 
     init(catalog: SpeciesCatalog = .shared) {
+        // Debug subjects (e.g. "adult", for testing against a person) resolve
+        // through the same catalog lookup as a real species, so they need to be
+        // catchable here too, even though they are excluded from catalog.all.
         self.catchableLabels = Set(catalog.all.map(\.labelKey))
+            .union(SpeciesCatalog.debugSubjects.keys)
         if catchableLabels.isEmpty {
             log.warning("Catalog empty — recognizer will never produce a catchable candidate.")
         }

@@ -16,6 +16,12 @@ final class ScannerViewModel {
     private(set) var errorMessage: String?
     private(set) var isStarted = false
 
+    /// Diagnostics only — the game loop never reads these.
+    private(set) var lastResult: RecognitionResult?
+    private(set) var framesSeen = 0
+
+    var recognizerID: String { recognizer.identifier }
+
     /// Set when the shutter fires; the scanner presents the catch sequence off this.
     var pendingCatch: PendingCatch?
 
@@ -83,6 +89,8 @@ final class ScannerViewModel {
             defer { self.isRecognizing = false }
             do {
                 let result = try await recognizer.recognize(input, orientation: orientation)
+                lastResult = result
+                framesSeen += 1
                 let state = gate.evaluate(result)
                 apply(state)
             } catch {

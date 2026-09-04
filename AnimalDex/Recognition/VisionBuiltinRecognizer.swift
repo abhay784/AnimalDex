@@ -73,6 +73,7 @@ final class VisionBuiltinRecognizer: SpeciesRecognizer {
     func classify(_ observations: [VNClassificationObservation]) -> RecognitionResult {
         var candidates: [RecognitionCandidate] = []
         var hypernyms: [RecognitionCandidate] = []
+        var raw: [RawObservation] = []
         var isFood = false
         var isCaptive = false
 
@@ -84,11 +85,13 @@ final class VisionBuiltinRecognizer: SpeciesRecognizer {
             if CreatureLabels.foodContext.contains(id),
                obs.confidence >= CreatureLabels.foodVetoThreshold {
                 isFood = true
+                raw.append(.init(label: id, confidence: obs.confidence, kind: .food))
                 continue
             }
 
             if CreatureLabels.captivityContext.contains(id) {
                 isCaptive = true
+                raw.append(.init(label: id, confidence: obs.confidence, kind: .captivity))
                 continue
             }
 
@@ -96,19 +99,25 @@ final class VisionBuiltinRecognizer: SpeciesRecognizer {
             // separate allowlist to drift out of sync with it.
             if catchableLabels.contains(id) {
                 candidates.append(.init(labelKey: id, confidence: obs.confidence))
+                raw.append(.init(label: id, confidence: obs.confidence, kind: .catchable))
             } else if CreatureLabels.hypernyms.contains(id) {
                 hypernyms.append(.init(labelKey: id, confidence: obs.confidence))
+                raw.append(.init(label: id, confidence: obs.confidence, kind: .hypernym))
+            } else {
+                raw.append(.init(label: id, confidence: obs.confidence, kind: .ignored))
             }
         }
 
         candidates.sort { $0.confidence > $1.confidence }
         hypernyms.sort { $0.confidence > $1.confidence }
+        raw.sort { $0.confidence > $1.confidence }
 
         return RecognitionResult(
             candidates: candidates,
             hypernyms: hypernyms,
             isFoodContext: isFood,
-            isCaptive: isCaptive
+            isCaptive: isCaptive,
+            rawTop: Array(raw.prefix(8))
         )
     }
 }

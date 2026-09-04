@@ -1,0 +1,15 @@
+// Local code-signing settings.
+//
+// Simulator builds need nothing here. To run on a physical iPhone, put your
+// Team ID on the line below — `scripts/find-team-id.sh` prints it once you have
+// signed into Xcode with an Apple ID (Xcode > Settings > Accounts).
+//
+// A free Apple ID works. Its limits: the provisioning profile expires after
+// 7 days, so the app stops launching and must be reinstalled, and you can have
+// at most 3 such apps installed at once.
+
+DEVELOPMENT_TEAM =
+
+// Personal-team provisioning requires a bundle id nobody else has claimed.
+// If Xcode reports the identifier is unavailable, change this suffix.
+PRODUCT_BUNDLE_IDENTIFIER = com.abhay.animaldex

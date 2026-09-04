@@ -7,6 +7,28 @@ struct RecognitionCandidate: Hashable, Sendable {
     let confidence: Float
 }
 
+/// One raw label as the model reported it, plus how we interpreted it.
+///
+/// Exists purely for on-device diagnosis. Without it, a scanner that never locks
+/// is indistinguishable between "the model saw nothing", "it saw a creature but
+/// below threshold", "it only produced umbrella labels", and "the food veto
+/// fired" — four different bugs presenting as one blank screen.
+struct RawObservation: Sendable, Hashable, Identifiable {
+    enum Kind: String, Sendable {
+        case catchable    // resolves to a dex entry
+        case hypernym     // umbrella label, gates but never catches
+        case food         // veto trigger
+        case captivity    // zoo / aquarium context
+        case ignored      // not a creature label at all
+    }
+
+    let label: String
+    let confidence: Float
+    let kind: Kind
+
+    var id: String { label }
+}
+
 /// A single frame's interpretation, already sorted into meaningful buckets so
 /// callers never have to know how the underlying model labels things.
 struct RecognitionResult: Sendable {
@@ -22,8 +44,12 @@ struct RecognitionResult: Sendable {
     /// Zoo / aquarium / terrarium context. Recorded, not blocked.
     let isCaptive: Bool
 
+    /// Highest-confidence raw labels, for the diagnostic overlay only. Nothing
+    /// in the game loop reads this.
+    let rawTop: [RawObservation]
+
     static let empty = RecognitionResult(
-        candidates: [], hypernyms: [], isFoodContext: false, isCaptive: false
+        candidates: [], hypernyms: [], isFoodContext: false, isCaptive: false, rawTop: []
     )
 }
 

@@ -64,7 +64,8 @@ final class ScriptedRecognizer: SpeciesRecognizer {
             candidates: [.init(labelKey: name, confidence: Float(wobble))],
             hypernyms: [],
             isFoodContext: false,
-            isCaptive: false
+            isCaptive: false,
+            rawTop: [.init(label: name, confidence: Float(wobble), kind: .catchable)]
         )
     }
 }

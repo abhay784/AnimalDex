@@ -24,6 +24,23 @@ struct ScannerView: View {
             }
             .padding(.vertical, 14)
 
+            if Diagnostics.isEnabled {
+                VStack {
+                    HStack {
+                        DiagnosticsHUD(
+                            recognizerID: model.recognizerID,
+                            gateState: model.gateState,
+                            result: model.lastResult,
+                            framesSeen: model.framesSeen
+                        )
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 52)
+            }
+
             if let message = model.errorMessage {
                 toast(message)
             }

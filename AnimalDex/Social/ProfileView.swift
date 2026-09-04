@@ -12,6 +12,8 @@ struct ProfileView: View {
     @State private var location = LocationProvider()
     @State private var showingAuth = false
     @State private var privacyMode = LocationPrivacy.mode
+    @State private var showDiagnostics = Diagnostics.isEnabled
+    @State private var serverHost = APIConfig.host
 
     private var uniqueKeys: Set<String> { Set(catches.map(\.speciesKey)) }
 
@@ -41,6 +43,7 @@ struct ProfileView: View {
                     privacySection
                 }
                 typeBreakdown
+                developerSection
                 if session.isSignedIn {
                     FriendsSection()
                 } else {
@@ -114,6 +117,71 @@ struct ProfileView: View {
             .padding(14)
             .bevelPanel()
         }
+    }
+
+    // MARK: - Developer
+
+    /// On-device testing controls.
+    ///
+    /// Both of these exist because the Simulator lies: it has no camera and its
+    /// Vision classifier does not work, so the only way to know the real
+    /// recognition path works is to run it on hardware and be able to see what
+    /// the model actually returned.
+    private var developerSection: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            Text("DEVELOPER")
+                .font(Theme.display(11))
+                .tracking(1.4)
+                .foregroundStyle(Theme.outline.opacity(0.7))
+
+            Button {
+                SoundBank.shared.play(.select)
+                showDiagnostics.toggle()
+                Diagnostics.isEnabled = showDiagnostics
+            } label: {
+                HStack(spacing: 9) {
+                    Image(systemName: showDiagnostics ? "checkmark.square.fill" : "square")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(showDiagnostics ? Theme.lens : Theme.outline.opacity(0.4))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("SHOW RECOGNITION OVERLAY")
+                            .font(Theme.display(11))
+                            .foregroundStyle(Theme.outline)
+                        Text("Live labels and confidences on the scanner.")
+                            .font(Theme.screenText(9))
+                            .foregroundStyle(Theme.outline.opacity(0.6))
+                    }
+                    Spacer()
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("profile.diagnosticsToggle")
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("SERVER HOST")
+                    .font(Theme.display(9))
+                    .tracking(1.2)
+                    .foregroundStyle(Theme.outline.opacity(0.65))
+                Text("On a phone, \"localhost\" is the phone. Use your Mac's LAN address to reach the backend.")
+                    .font(Theme.screenText(9))
+                    .foregroundStyle(Theme.outline.opacity(0.6))
+                TextField("localhost", text: $serverHost)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.URL)
+                    .font(Theme.screenText(12))
+                    .foregroundStyle(Theme.phosphor)
+                    .padding(8)
+                    .screenSurface(Theme.lcd, radius: 7)
+                    .accessibilityIdentifier("profile.serverHost")
+                    .onSubmit { APIConfig.host = serverHost }
+                Text("Currently: \(APIConfig.coreAPI.absoluteString)")
+                    .font(Theme.display(9))
+                    .foregroundStyle(Theme.outline.opacity(0.5))
+            }
+        }
+        .padding(14)
+        .bevelPanel()
     }
 
     // MARK: - Location privacy

@@ -2,24 +2,28 @@ import Foundation
 
 /// Where the backend lives.
 enum APIConfig {
-    /// The Simulator shares the host's network stack, so `localhost` reaches the
-    /// services running on the Mac. A real device needs the Mac's LAN address,
-    /// which is why this is overridable rather than hard-coded.
-    static var coreAPI: URL {
-        if let override = ProcessInfo.processInfo.environment["ANIMALDEX_API"],
-           let url = URL(string: override) {
-            return url
+    /// Host the services are reachable at, without scheme or port.
+    ///
+    /// The Simulator shares the Mac's network stack, so `localhost` works there.
+    /// On a real device `localhost` is *the phone*, so this must be the Mac's
+    /// LAN address — which is why it is settable from the Trainer tab rather
+    /// than compiled in.
+    static var host: String {
+        get { UserDefaults.standard.string(forKey: hostKey) ?? defaultHost }
+        set {
+            let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+            UserDefaults.standard.set(trimmed.isEmpty ? nil : trimmed, forKey: hostKey)
         }
-        return URL(string: "http://localhost:8080")!
     }
 
-    static var mediaAPI: URL {
-        if let override = ProcessInfo.processInfo.environment["ANIMALDEX_MEDIA"],
-           let url = URL(string: override) {
-            return url
-        }
-        return URL(string: "http://localhost:8081")!
+    private static let hostKey = "animaldex.serverHost"
+
+    private static var defaultHost: String {
+        ProcessInfo.processInfo.environment["ANIMALDEX_HOST"] ?? "localhost"
     }
+
+    static var coreAPI: URL { URL(string: "http://\(host):8080")! }
+    static var mediaAPI: URL { URL(string: "http://\(host):8081")! }
 
     /// Decoder shared by every response.
     ///

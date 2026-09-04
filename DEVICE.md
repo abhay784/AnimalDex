@@ -12,25 +12,46 @@ actually works.
 
 ---
 
-## What only you can do
+## Status
 
-The Mac has **no Apple ID signed into Xcode**, no signing certificate, and no
-provisioning profiles. That step needs your credentials.
+| Step | State |
+|---|---|
+| Apple ID signed into Xcode | ✅ done — `Abhay Korlapati (Personal Team)`, `AT33H6TMUA` |
+| Team ID written to `Config/Signing.xcconfig` | ✅ done, by `./scripts/find-team-id.sh` |
+| Apple Development certificate | ✅ created automatically on the first build attempt |
+| **Xcode version** | ❌ **blocked — see below** |
+| Device paired | ❌ blocked — needs the Xcode update first |
+| Provisioning profile | ❌ needs a paired device to generate |
 
-1. Open **Xcode**
-2. **Settings** (⌘,) → **Accounts** → **+** → **Apple ID**
-3. Sign in. **A free Apple ID is fine** — no paid developer account needed.
+## Currently blocking: Xcode is too old for this iPhone
 
-Then, back in the terminal:
+This Mac has **Xcode 16.4**, whose newest iOS SDK is **18.5**. The connected
+iPhone (`Abhay's iPhone`) runs **iOS 26.6.1**. Xcode cannot build for a device
+running an iOS newer than what it ships an SDK for, and there is no partial
+"platform support" package that bridges an 8-major-version gap — only Xcode
+itself updates that far.
 
-```bash
-./scripts/find-team-id.sh
-```
+**This needs Xcode 26.x**, downloaded via the App Store (already opened to the
+Xcode listing) or from developer.apple.com/download with your Apple ID.
 
-It reads the Team ID Xcode registered and writes it into
-`Config/Signing.xcconfig`. Until that line is filled in, a device build fails
-with *"Signing for AnimalDex requires a development team"* — which is expected,
-not a bug.
+Before starting the download:
+
+- **Check free space.** This Mac has ~31GB free. A current Xcode plus its
+  default iOS platform and simulators can approach that during install (the
+  installer needs working room beyond the final size). If the update stalls or
+  fails, free up space first — old simulator runtimes
+  (`xcrun simctl list runtimes`, `xcrun simctl runtime delete <id>`) and stale
+  DerivedData (`~/Library/Developer/Xcode/DerivedData`) are the usual easy wins.
+- It is a large download and will take a while on typical home internet.
+- **After it installs**, run:
+  ```bash
+  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+  ```
+  (a new Xcode install doesn't become the active one automatically), then
+  re-run `./scripts/run-on-device.sh`.
+
+Everything below this point is already done and does not need to be repeated —
+signing into Xcode again would be harmless but is not necessary.
 
 ## On the phone
 

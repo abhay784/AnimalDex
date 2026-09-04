@@ -8,7 +8,7 @@
 // 7 days, so the app stops launching and must be reinstalled, and you can have
 // at most 3 such apps installed at once.
 
-DEVELOPMENT_TEAM =
+DEVELOPMENT_TEAM = AT33H6TMUA
 
 // Personal-team provisioning requires a bundle id nobody else has claimed.
 // If Xcode reports the identifier is unavailable, change this suffix.

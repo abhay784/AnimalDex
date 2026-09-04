@@ -1,0 +1,62 @@
+# Local development dependencies for AnimalDex.
+#
+# Host ports are deliberately non-default (5433 / 6380 / 9100) so this stack
+# never collides with anything already running on the machine - there is already a Homebrew
+# Redis on 6379 and an unrelated project's Postgres on 5433 here, and silently attaching to the wrong database is
+# a genuinely bad afternoon.
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: animaldex-postgres
+    environment:
+      POSTGRES_USER: animaldex
+      POSTGRES_PASSWORD: animaldex_dev
+      POSTGRES_DB: animaldex
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Without this, `depends_on` only waits for the container to *start*, and
+      # migrations race a database that is still initialising.
+      test: ["CMD-SHELL", "pg_isready -U animaldex -d animaldex"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    container_name: animaldex-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    container_name: animaldex-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: animaldex
+      MINIO_ROOT_PASSWORD: animaldex_dev_secret
+    ports:
+      - "9100:9000"   # S3 API
+      - "9101:9001"   # web console
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

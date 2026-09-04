@@ -99,13 +99,20 @@ final class VisionBuiltinRecognizer: SpeciesRecognizer {
                 continue
             }
 
+            // Vision is sometimes more specific than the catalog — "corgi"
+            // where the catalog only knows "dog". Canonicalise before the
+            // catchable check so the candidate resolves; the diagnostics
+            // overlay still gets the true, un-canonicalised `id` below, so a
+            // breed label reads as itself there rather than as "dog".
+            let canonical = CreatureLabels.breedAliases[id] ?? id
+
             // Catchable is *defined* as "present in the catalog" — there is no
             // separate allowlist to drift out of sync with it.
-            if catchableLabels.contains(id) {
-                candidates.append(.init(labelKey: id, confidence: obs.confidence))
+            if catchableLabels.contains(canonical) {
+                candidates.append(.init(labelKey: canonical, confidence: obs.confidence))
                 raw.append(.init(label: id, confidence: obs.confidence, kind: .catchable))
-            } else if CreatureLabels.hypernyms.contains(id) {
-                hypernyms.append(.init(labelKey: id, confidence: obs.confidence))
+            } else if CreatureLabels.hypernyms.contains(canonical) {
+                hypernyms.append(.init(labelKey: canonical, confidence: obs.confidence))
                 raw.append(.init(label: id, confidence: obs.confidence, kind: .hypernym))
             } else {
                 raw.append(.init(label: id, confidence: obs.confidence, kind: .ignored))

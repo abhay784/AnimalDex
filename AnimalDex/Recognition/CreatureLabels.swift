@@ -19,8 +19,43 @@ enum CreatureLabels {
         "animal", "mammal", "bird", "fish", "insect", "reptile", "arachnid",
         "rodent", "canine", "feline", "marsupial", "ungulates", "arthropods",
         "cetacean", "gastropod", "cephalopod", "mollusk", "shellfish",
-        "raptor", "hound", "poultry", "seafood",
+        "raptor", "poultry", "seafood",
     ]
+
+    /// Vision labels that are more specific than anything in the catalog,
+    /// mapped onto the one dex entry they should register as.
+    ///
+    /// Discovered from a real bug report: scanning a dog produced nothing. The
+    /// catalog only knows the generic `"dog"` (→ Domestic Dog), but Vision has a
+    /// breed-level taxonomy — 39 distinct identifiers — and for a photo with a
+    /// recognisable breed it reports the breed at high confidence and the
+    /// generic `"dog"` barely at all, so the generic label alone never crossed
+    /// the gate's threshold. This is not a dog-only shape: any category where
+    /// Vision's granularity is finer than the catalog's will fail the same way.
+    ///
+    /// Applied before the catchable/hypernym check in
+    /// `VisionBuiltinRecognizer.classify(_:)` — the *raw* breed label is still
+    /// what appears in the diagnostics overlay, so `corgi 0.87` stays legible;
+    /// only the resulting `RecognitionCandidate` is canonicalised, which is what
+    /// lets `SpeciesCatalog.species(forLabel:)` resolve it.
+    static let breedAliases: [String: String] = {
+        let dogBreeds = [
+            "australian_shepherd", "basenji", "basset", "beagle",
+            "bernese_mountain", "bichon", "bulldog", "chihuahua", "collie",
+            "corgi", "dachshund", "dalmatian", "doberman", "german_shepherd",
+            "greyhound", "hound", "husky", "irish_wolfhound",
+            "jack_russell_terrier", "malamute", "malinois", "mastiff",
+            "newfoundland", "pitbull", "pomeranian", "poodle", "pug",
+            "retriever", "ridgeback", "rottweiler", "saint_bernard",
+            "schnauzer", "setter", "sheepdog", "spaniel", "terrier", "vizsla",
+            "weimaraner",
+        ]
+        var map = Dictionary(uniqueKeysWithValues: dogBreeds.map { ($0, "dog") })
+        // Vision's cat equivalent of "adult" — a grown-cat age marker, not a
+        // breed, but the same "more specific than the catalog" shape.
+        map["adult_cat"] = "cat"
+        return map
+    }()
 
     /// Context labels that mean the "creature" on screen is lunch.
     ///

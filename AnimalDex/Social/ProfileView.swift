@@ -7,8 +7,11 @@ import SwiftData
 /// single-player half, which is fully useful on its own.
 struct ProfileView: View {
     @Environment(SpeciesCatalog.self) private var catalog
+    @Environment(SessionStore.self) private var session
     @Query private var catches: [CatchRecord]
     @State private var location = LocationProvider()
+    @State private var showingAuth = false
+    @State private var privacyMode = LocationPrivacy.mode
 
     private var uniqueKeys: Set<String> { Set(catches.map(\.speciesKey)) }
 
@@ -32,13 +35,125 @@ struct ProfileView: View {
         ScrollView {
             VStack(spacing: 16) {
                 trainerCard
+                accountSection
                 locationOptIn
+                if location.authorization == .authorizedWhenInUse || location.authorization == .authorizedAlways {
+                    privacySection
+                }
                 typeBreakdown
-                friendsPlaceholder
+                if session.isSignedIn {
+                    FriendsSection()
+                } else {
+                    friendsPlaceholder
+                }
             }
             .padding(16)
         }
         .background(Theme.phosphorDim)
+        .sheet(isPresented: $showingAuth) { AuthView() }
+    }
+
+    // MARK: - Account
+
+    @ViewBuilder
+    private var accountSection: some View {
+        if let user = session.currentUser, session.isSignedIn {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 16, weight: .black))
+                    .foregroundStyle(Theme.ledGreen)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("SIGNED IN AS @\(user.handle)")
+                        .font(Theme.display(11))
+                        .foregroundStyle(Theme.outline)
+                    Text("Catches you share appear on the community map.")
+                        .font(Theme.screenText(9))
+                        .foregroundStyle(Theme.outline.opacity(0.6))
+                }
+                Spacer()
+                Button {
+                    Task { await session.signOut() }
+                } label: {
+                    Text("SIGN OUT")
+                        .font(Theme.display(9))
+                        .foregroundStyle(Theme.outline.opacity(0.7))
+                        .padding(.horizontal, 9).padding(.vertical, 6)
+                        .overlay(Capsule().strokeBorder(Theme.outline.opacity(0.4), lineWidth: 2))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("profile.signOut")
+            }
+            .padding(14)
+            .bevelPanel()
+        } else {
+            VStack(spacing: 9) {
+                Text("CONNECT TO ANIMALDEX")
+                    .font(Theme.display(12))
+                    .tracking(1.2)
+                    .foregroundStyle(Theme.outline)
+                Text("Your Dex works offline and always will. Sign in only if you want to share sightings and compare with friends.")
+                    .font(Theme.screenText(10))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Theme.outline.opacity(0.7))
+                Button {
+                    SoundBank.shared.play(.select)
+                    showingAuth = true
+                } label: {
+                    Text("SIGN IN OR REGISTER")
+                        .font(Theme.display(12))
+                        .tracking(1.2)
+                        .outlinedText()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.shell))
+                        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Theme.outline, lineWidth: 2.5))
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("profile.signIn")
+            }
+            .padding(14)
+            .bevelPanel()
+        }
+    }
+
+    // MARK: - Location privacy
+
+    private var privacySection: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text("SHARED PIN PRECISION")
+                .font(Theme.display(11))
+                .tracking(1.2)
+                .foregroundStyle(Theme.outline.opacity(0.7))
+            Text("Applies only to catches you choose to share. Exact coordinates can reveal where you live, and for rare species they are a known collection risk.")
+                .font(Theme.screenText(9))
+                .foregroundStyle(Theme.outline.opacity(0.6))
+
+            ForEach(LocationPrivacy.Mode.allCases) { mode in
+                Button {
+                    SoundBank.shared.play(.select)
+                    privacyMode = mode
+                    LocationPrivacy.mode = mode
+                } label: {
+                    HStack(spacing: 9) {
+                        Image(systemName: privacyMode == mode ? "largecircle.fill.circle" : "circle")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(privacyMode == mode ? Theme.lens : Theme.outline.opacity(0.4))
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(mode.title)
+                                .font(Theme.display(11))
+                                .foregroundStyle(Theme.outline)
+                            Text(mode.explanation)
+                                .font(Theme.screenText(9))
+                                .foregroundStyle(Theme.outline.opacity(0.6))
+                        }
+                        Spacer()
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(14)
+        .bevelPanel()
     }
 
     /// Location is opted into here, not demanded at launch. Asking in context —

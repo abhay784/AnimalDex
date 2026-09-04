@@ -14,7 +14,17 @@ struct AnimalDexApp: App {
     }()
 
     @State private var catalog = SpeciesCatalog.shared
+    @State private var session: SessionStore
+    @State private var sync: SyncEngine
     @State private var hasBooted = false
+
+    init() {
+        // SyncEngine needs the session, so both are constructed here rather than
+        // as default property initialisers.
+        let session = SessionStore()
+        _session = State(initialValue: session)
+        _sync = State(initialValue: SyncEngine(session: session))
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -27,6 +37,8 @@ struct AnimalDexApp: App {
                 }
             }
             .environment(catalog)
+            .environment(session)
+            .environment(sync)
             .preferredColorScheme(.light)
             .task {
                 SoundBank.shared.preload()

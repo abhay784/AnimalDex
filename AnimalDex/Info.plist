@@ -22,6 +22,15 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- Development only: the backend runs over plain HTTP on localhost.
+		     NSAllowsLocalNetworking permits local addresses without opening up
+		     arbitrary insecure loads the way NSAllowsArbitraryLoads would.
+		     Remove this once the API is behind TLS. -->
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>AnimalDex uses your camera to spot and identify wildlife so you can add it to your Dex.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

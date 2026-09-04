@@ -199,5 +199,6 @@ struct EntriesGridView: View {
             )
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier(caught ? "dex.caught.\(species.labelKey)" : "dex.locked.\(species.labelKey)")
     }
 }

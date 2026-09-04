@@ -43,7 +43,9 @@ final class SampleFrameSource: FrameSource {
             }
         currentImage = samples.first?.image
         currentName = samples.first?.name ?? ""
+        #if targetEnvironment(simulator)
         ScriptedRecognizer.currentSampleName = currentName
+        #endif
         if samples.isEmpty {
             log.warning("No sample_*.jpg in bundle — run tools/fetch_samples.py")
         }
@@ -72,7 +74,9 @@ final class SampleFrameSource: FrameSource {
         index = (index + 1) % samples.count
         currentImage = samples[index].image
         currentName = samples[index].name
+        #if targetEnvironment(simulator)
         ScriptedRecognizer.currentSampleName = currentName
+        #endif
         emit()
     }
 

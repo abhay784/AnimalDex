@@ -88,7 +88,15 @@ if ! grep -q "BUILD SUCCEEDED" /tmp/animaldex-build.log; then
   exit 1
 fi
 
-APP=$(find ~/Library/Developer/Xcode/DerivedData -name 'AnimalDex.app' -path '*Debug-iphoneos*' -print -quit 2>/dev/null)
+# DerivedData holds two "Debug-iphoneos" trees: the real build product under
+# Build/Products, and Xcode's Index.noindex copy used for code indexing, which
+# is not a valid installable bundle (its Info.plist is stripped). Both match a
+# naive '*Debug-iphoneos*' path glob, and `find -quit` took whichever the
+# filesystem listed first — silently installing the wrong one.
+APP=$(find ~/Library/Developer/Xcode/DerivedData \
+        -path '*/Build/Products/Debug-iphoneos/AnimalDex.app' \
+        -not -path '*Index.noindex*' \
+        -print -quit 2>/dev/null)
 if [ -z "$APP" ]; then
   echo "Build succeeded but no device .app was found. Log: /tmp/animaldex-build.log"
   exit 1

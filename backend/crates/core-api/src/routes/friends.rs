@@ -59,6 +59,10 @@ async fn request(
         return Err(ApiError::BadRequest("You cannot befriend yourself.".into()));
     }
 
+    // Unlike uploads, the abuse here is social rather than financial: without a
+    // limit one account can spray requests at every handle it can guess.
+    crate::cache::check_limit(&state, "friendreq", user.id, 20, 3600).await?;
+
     let (low, high) = pair(user.id, target.id);
 
     // ON CONFLICT DO NOTHING makes a duplicate request idempotent rather than an

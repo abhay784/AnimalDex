@@ -5,9 +5,11 @@
 //! together by it. What lives here is only what genuinely must agree across the
 //! boundary: the error contract, and how a JWT is verified.
 
+pub mod auth;
 pub mod error;
 pub mod jwt;
 pub mod telemetry;
 
+pub use auth::{AuthUser, HasJwtKeys};
 pub use error::{ApiError, ApiResult};
 pub use jwt::{AccessClaims, JwtKeys};

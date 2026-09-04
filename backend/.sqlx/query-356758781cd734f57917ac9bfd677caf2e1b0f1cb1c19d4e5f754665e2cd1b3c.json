@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE media_objects\n        SET status = 'ready', completed_at = now(), byte_size = $2, content_type = $3\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "356758781cd734f57917ac9bfd677caf2e1b0f1cb1c19d4e5f754665e2cd1b3c"
+}

@@ -1,0 +1,69 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT c.id, c.user_id, u.handle, c.species_key, c.caught_at, c.lat, c.lng, c.media_id\n        FROM catches c\n        JOIN users u ON u.id = c.user_id\n        WHERE c.user_id = $1\n        ORDER BY c.caught_at DESC\n        LIMIT 500\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "handle",
+        "type_info": {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "species_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "caught_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "lat",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "lng",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
+        "name": "media_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c998a73ca3fd73406534717c730532cc0b51b0b2adab9a2034f6194e50eb2770"
+}

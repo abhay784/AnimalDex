@@ -1,0 +1,72 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT c.id, c.user_id, u.handle, c.species_key, c.caught_at, c.lat, c.lng, c.media_id\n        FROM catches c\n        JOIN users u ON u.id = c.user_id\n        WHERE c.location IS NOT NULL\n          AND ST_DWithin(c.location, ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography, $3)\n        ORDER BY c.location <-> ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography\n        LIMIT $4\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "handle",
+        "type_info": {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "species_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "caught_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "lat",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "lng",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 7,
+        "name": "media_id",
+        "type_info": "Uuid"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Float8",
+        "Float8",
+        "Float8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "30b235794e82f1f110e1e4879168ec547532eff2d8ee03cb0d890b5e645e9aef"
+}

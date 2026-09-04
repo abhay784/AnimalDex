@@ -1,0 +1,57 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            u.id, u.handle, u.display_name,\n            f.status::text AS \"status!\",\n            (f.requested_by <> $1) AS \"incoming!\",\n            (SELECT count(DISTINCT c.species_key) FROM catches c WHERE c.user_id = u.id) AS \"species_count!\"\n        FROM friendships f\n        JOIN users u\n          ON u.id = CASE WHEN f.user_low = $1 THEN f.user_high ELSE f.user_low END\n        WHERE $1 IN (f.user_low, f.user_high)\n        ORDER BY f.status, u.handle\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "handle",
+        "type_info": {
+          "Custom": {
+            "name": "citext",
+            "kind": "Simple"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "display_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "status!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "incoming!",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "species_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "b6719f4392c7b867aeb4b2a0d26e9524b67ffc0c5b3165e35dc8f654d2900b81"
+}

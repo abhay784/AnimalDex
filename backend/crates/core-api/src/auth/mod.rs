@@ -1,8 +1,7 @@
-pub mod extractor;
 pub mod password;
 pub mod tokens;
 
-pub use extractor::AuthUser;
+pub use shared::AuthUser;
 
 use axum::extract::State;
 use axum::http::HeaderMap;

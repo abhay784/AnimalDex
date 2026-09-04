@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO friendships (user_low, user_high, requested_by)\n        VALUES ($1, $2, $3)\n        ON CONFLICT (user_low, user_high) DO NOTHING\n        RETURNING status::text AS \"status!\"\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "status!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "95033b438b18454c164b32c1423a57cdd10a87bf01622f5d089964e9411e5c63"
+}

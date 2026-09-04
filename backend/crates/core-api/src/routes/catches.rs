@@ -27,7 +27,7 @@ pub struct CreateCatch {
     pub media_id: Option<Uuid>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CatchView {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -93,7 +93,7 @@ async fn create(
     .fetch_one(&state.db)
     .await?;
 
-    crate::routes::invalidate_user_cache(&state, user.id).await;
+    crate::cache::bump_geo_version(&state).await;
 
     Ok(Json(CatchView {
         id: row.id,
@@ -170,6 +170,15 @@ async fn nearby(
     let radius = q.radius_m.clamp(1.0, MAX_RADIUS_M);
     let limit = q.limit.clamp(1, MAX_LIMIT);
 
+    // Short TTL: community pins are interesting, not urgent. 30 seconds absorbs
+    // the map-panning burst that dominates this endpoint's traffic while keeping
+    // a new catch visible almost immediately.
+    let version = crate::cache::geo_version(&state).await;
+    let cache_key = crate::cache::nearby_key(version, q.lat, q.lng, radius, limit);
+    if let Some(hit) = crate::cache::get_json::<Vec<CatchView>>(&state, &cache_key).await {
+        return Ok(Json(hit));
+    }
+
     let rows = sqlx::query!(
         r#"
         SELECT c.id, c.user_id, u.handle, c.species_key, c.caught_at, c.lat, c.lng, c.media_id
@@ -188,20 +197,22 @@ async fn nearby(
     .fetch_all(&state.db)
     .await?;
 
-    Ok(Json(
-        rows.into_iter()
-            .map(|r| CatchView {
-                id: r.id,
-                user_id: r.user_id,
-                handle: r.handle,
-                species_key: r.species_key,
-                caught_at: r.caught_at,
-                lat: r.lat,
-                lng: r.lng,
-                media_id: r.media_id,
-            })
-            .collect(),
-    ))
+    let views: Vec<CatchView> = rows
+        .into_iter()
+        .map(|r| CatchView {
+            id: r.id,
+            user_id: r.user_id,
+            handle: r.handle,
+            species_key: r.species_key,
+            caught_at: r.caught_at,
+            lat: r.lat,
+            lng: r.lng,
+            media_id: r.media_id,
+        })
+        .collect();
+
+    crate::cache::set_json(&state, &cache_key, &views, 30).await;
+    Ok(Json(views))
 }
 
 async fn remove(
@@ -221,6 +232,6 @@ async fn remove(
         // that difference is an enumeration oracle for other users' catch ids.
         return Err(ApiError::NotFound("catch"));
     }
-    crate::routes::invalidate_user_cache(&state, user.id).await;
+    crate::cache::bump_geo_version(&state).await;
     Ok(axum::http::StatusCode::NO_CONTENT)
 }

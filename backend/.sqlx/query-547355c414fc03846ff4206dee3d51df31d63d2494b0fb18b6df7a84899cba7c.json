@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO media_objects (id, owner_id, object_key, content_type, status)\n        VALUES ($1, $2, $3, $4, 'pending')\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "547355c414fc03846ff4206dee3d51df31d63d2494b0fb18b6df7a84899cba7c"
+}

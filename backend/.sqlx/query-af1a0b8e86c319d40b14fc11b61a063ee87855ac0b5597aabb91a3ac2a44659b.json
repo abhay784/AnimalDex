@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT species_key, count(*) AS \"count!\", min(caught_at) AS \"first_caught!\"\n        FROM catches\n        WHERE user_id = $1\n        GROUP BY species_key\n        ORDER BY min(caught_at)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "species_key",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "first_caught!",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "af1a0b8e86c319d40b14fc11b61a063ee87855ac0b5597aabb91a3ac2a44659b"
+}

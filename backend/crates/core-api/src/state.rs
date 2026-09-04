@@ -11,3 +11,9 @@ pub struct AppState {
     pub redis: Option<ConnectionManager>,
     pub jwt: JwtKeys,
 }
+
+impl shared::HasJwtKeys for AppState {
+    fn jwt_keys(&self) -> &JwtKeys {
+        &self.jwt
+    }
+}

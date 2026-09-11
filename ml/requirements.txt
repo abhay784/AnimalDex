@@ -1,0 +1,12 @@
+# Install into an isolated CPython 3.10 or 3.11 virtual environment before
+# downloading data or training. These are the versions tested together by the
+# PyTorch and Core ML conversion toolchain.
+torch==2.5.1
+torchvision==0.20.1
+coremltools>=8.3,<9
+requests>=2.32,<3
+Pillow>=10.4,<12
+numpy>=2.1,<3
+# Optional benchmark runtime for the BioCLIP zero-shot experiment.
+open-clip-torch>=3.3,<4
+huggingface-hub>=0.36,<1

@@ -82,6 +82,7 @@ final class BackendIntegrationUITests: XCTestCase {
         type("auth.displayName", "Sim Trainer")
         type("auth.email", "\(handle!)@example.com")
         type("auth.password", "correct-horse-battery")
+        type("auth.confirmPassword", "correct-horse-battery")
         snapshot("10-register-form")
 
         app.buttons["auth.submit"].tap()
@@ -90,6 +91,17 @@ final class BackendIntegrationUITests: XCTestCase {
         let signOut = app.buttons["profile.signOut"]
         XCTAssertTrue(signOut.waitForExistence(timeout: 20), "registration did not sign us in")
         snapshot("11-signed-in")
+
+        // --- sign in -------------------------------------------------------
+        // Signing out and back in makes this an end-to-end check of both
+        // account creation and the normal returning-trainer path.
+        signOut.tap()
+        XCTAssertTrue(signIn.waitForExistence(timeout: 8), "sign-out did not return to the account entry point")
+        signIn.tap()
+        type("auth.handle", handle)
+        type("auth.password", "correct-horse-battery")
+        app.buttons["auth.submit"].tap()
+        XCTAssertTrue(signOut.waitForExistence(timeout: 20), "sign-in did not restore the session")
 
         // --- catch ----------------------------------------------------------
         app.buttons["tab.scanner"].tap()

@@ -11,7 +11,38 @@ struct AuthView: View {
     @State private var handle = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var confirmPassword = ""
     @State private var displayName = ""
+    @State private var validationMessage: String?
+
+    private var normalizedHandle: String { handle.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var normalizedEmail: String { email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+    private var normalizedDisplayName: String {
+        displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var formError: String? {
+        guard !normalizedHandle.isEmpty, !password.isEmpty else { return nil }
+
+        let handleIsValid = (3...24).contains(normalizedHandle.count)
+            && normalizedHandle.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "_") }
+        guard handleIsValid else {
+            return "Handle must be 3–24 letters, numbers, or underscores."
+        }
+
+        guard mode == .register else { return nil }
+        guard normalizedEmail.contains("@") else { return "Enter a valid email address." }
+        guard password.count >= 10 else { return "Password must be at least 10 characters." }
+        guard password == confirmPassword else { return "Passwords do not match." }
+        guard normalizedDisplayName.isEmpty || normalizedDisplayName.count <= 40 else {
+            return "Display name must be 40 characters or fewer."
+        }
+        return nil
+    }
+
+    private var canSubmit: Bool {
+        !session.isBusy && !normalizedHandle.isEmpty && !password.isEmpty && formError == nil
+    }
 
     var body: some View {
         ScrollView {
@@ -20,7 +51,7 @@ struct AuthView: View {
                 form
                 submitButton
                 switcher
-                if let message = session.errorMessage {
+                if let message = formError ?? validationMessage ?? session.errorMessage {
                     Text(message.uppercased())
                         .font(Theme.screenText(10))
                         .foregroundStyle(Theme.phosphor)
@@ -62,7 +93,8 @@ struct AuthView: View {
             }
             field("PASSWORD", text: $password, content: .password, secure: true, identifier: "auth.password")
             if mode == .register {
-                Text("At least 10 characters.")
+                field("CONFIRM PASSWORD", text: $confirmPassword, content: .password, secure: true, identifier: "auth.confirmPassword")
+                Text("At least 10 characters. Handles use letters, numbers, and underscores.")
                     .font(Theme.display(9))
                     .foregroundStyle(Theme.outline.opacity(0.55))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -106,16 +138,23 @@ struct AuthView: View {
     private var submitButton: some View {
         Button {
             Task {
-                switch mode {
-                case .signIn:
-                    await session.login(handle: handle, password: password)
-                case .register:
-                    await session.register(
-                        handle: handle, email: email,
-                        password: password,
-                        displayName: displayName.isEmpty ? handle : displayName
-                    )
+                guard let formError else {
+                    validationMessage = nil
+                    switch mode {
+                    case .signIn:
+                        await session.login(handle: normalizedHandle, password: password)
+                    case .register:
+                        await session.register(
+                            handle: normalizedHandle,
+                            email: normalizedEmail,
+                            password: password,
+                            displayName: normalizedDisplayName.isEmpty ? normalizedHandle : normalizedDisplayName
+                        )
+                    }
+                    return
                 }
+                validationMessage = formError
+                return
             }
         } label: {
             HStack(spacing: 8) {
@@ -132,8 +171,8 @@ struct AuthView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("auth.submit")
-        .disabled(session.isBusy || handle.isEmpty || password.isEmpty)
-        .opacity(handle.isEmpty || password.isEmpty ? 0.55 : 1)
+        .disabled(!canSubmit)
+        .opacity(canSubmit ? 1 : 0.55)
     }
 
     private var switcher: some View {
@@ -141,6 +180,8 @@ struct AuthView: View {
             SoundBank.shared.play(.select)
             withAnimation { mode = mode == .signIn ? .register : .signIn }
             session.errorMessage = nil
+            validationMessage = nil
+            confirmPassword = ""
         } label: {
             Text(mode == .signIn ? "NEED AN ACCOUNT? REGISTER" : "ALREADY REGISTERED? SIGN IN")
                 .font(Theme.display(11))
